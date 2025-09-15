@@ -18,6 +18,9 @@ hosting/.cache
 /.firebase/
 /emulator-ui/
 
+#Firebase Config
+/src/firebase/firebase.js
+
 # Logs
 *.log
 npm-debug.log*
@@ -26,3 +29,6 @@ yarn-error.log*
 
 # Environment files (local configs)
 /.env.*
+
+# Node modules
+node_modules/
