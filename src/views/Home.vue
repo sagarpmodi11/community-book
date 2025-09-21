@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="capitalize">
     <h1>This is a home page</h1>
   </div>
 </template>
