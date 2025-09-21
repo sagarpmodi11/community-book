@@ -24,7 +24,7 @@
 }
 
 .form-container {
-  @apply flex flex-col items-center max-w-md mx-auto my-8 p-6 bg-white rounded-lg shadow-md;
+  @apply flex flex-col max-w-md mx-auto my-8 p-6 bg-white rounded-lg shadow-md;
 }
 
 .btn {
@@ -32,7 +32,7 @@
 }
 
 .input {
-  @apply border-2 border-gray-300 rounded px-2 py-1 my-2 focus:outline-none focus:border-blue-500;
+  @apply border-2 border-gray-300 w-64 rounded px-2 py-1 my-2 focus:outline-none focus:border-blue-500 sm:w-100;
 }
 
 .title {

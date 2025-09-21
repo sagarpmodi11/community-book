@@ -44,6 +44,14 @@
           </RouterLink>
           <RouterLink
             v-if="useAuthStore().user"
+            to="/family"
+            class="px-3 py-2 rounded hover:bg-blue-700"
+            active-class="bg-blue-500"
+          >
+            Family
+          </RouterLink>
+          <RouterLink
+            v-if="useAuthStore().user"
             to="/login"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -52,8 +60,8 @@
             Log Out
           </RouterLink>
         </nav>
-        <p v-if="useAuthStore().user" class="text-white">
-          Welcome {{ useAuthStore().user.email }}
+        <p v-if="useAuthStore().user" class="text-white capitalize">
+          Welcome {{ useAuthStore().user.email.split("@")[0] }}
         </p>
       </div>
     </header>
@@ -83,7 +91,9 @@
     <!-- Main Content Area -->
     <div class="flex flex-1">
       <!-- Center Content -->
-      <main class="flex flex-col bg-blue-50 justify-centre min-w-screen p-6 font-sans">
+      <main
+        class="flex flex-col bg-blue-50 justify-centre min-w-screen p-6 font-sans"
+      >
         <RouterView />
       </main>
     </div>

@@ -4,11 +4,11 @@
     <div>
       <p class="error" v-if="error">{{ error }}</p>
     </div>
-    <form @submit.prevent="handleLogin" class="form-container">
+    <form @submit.prevent="handleLogin" class="form-container items-center">
       <div>
         <input
-          type="email"
-          placeholder="Email"
+          type="text"
+          placeholder="FamilyId"
           class="input"
           required
           v-model="username"
@@ -49,9 +49,10 @@ const authStore = useAuthStore();
 
 const handleLogin = async () => {
   try {
+    const email = `${username.value}@communitybook.com`;
     const userCredential = await signInWithEmailAndPassword(
       auth,
-      username.value,
+      email,
       password.value
     );
     const user = userCredential.user;
