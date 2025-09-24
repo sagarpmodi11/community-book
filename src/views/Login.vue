@@ -1,4 +1,5 @@
 <template>
+  <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
     <h1 class="title">Login</h1>
     <div>
@@ -40,14 +41,17 @@ import { auth } from "../firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/useAuthStore";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
 
 const username = ref("");
 const password = ref("");
-const error = ref("");
+const error = ref(null);
 const router = useRouter();
 const authStore = useAuthStore();
+const loading = ref(false);
 
 const handleLogin = async () => {
+  loading.value = true;
   try {
     const email = `${username.value}@communitybook.com`;
     const userCredential = await signInWithEmailAndPassword(
@@ -57,6 +61,7 @@ const handleLogin = async () => {
     );
     const user = userCredential.user;
     authStore.setUser(user);
+    loading.value = false;
     router.push("/");
   } catch (err) {
     if (err.code) {
@@ -84,13 +89,14 @@ const handleLogin = async () => {
           error.value = "An unexpected error occurred:";
       }
     } else {
+      loading.value = false;
       error.value = err.message;
     }
   }
 
   if (error) {
     setTimeout(() => {
-      error.value = "";
+      error.value = null;
     }, 3000);
   }
 };

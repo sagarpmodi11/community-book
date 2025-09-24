@@ -1,30 +1,5 @@
 <template>
-  <div
-    v-if="loading"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-    style="pointer-events: auto"
-  >
-    <svg
-      class="animate-spin h-8 w-8 text-blue-600"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        class="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        stroke-width="4"
-      ></circle>
-      <path
-        class="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v8z"
-      ></path>
-    </svg>
-  </div>
+  <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
     <h1 class="title">Family Details</h1>
     <div>
@@ -136,6 +111,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "vue-router";
 import { db } from "../firebase/firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
 
 const store = useAuthStore();
 const router = useRouter();
@@ -234,6 +210,7 @@ const addFamilyDetail = async () => {
         district: district.value || "",
         updatedAt: new Date(),
       });
+      loading.value = false;
       status.value = "Family details added successfully!";
     } catch (err) {
       error.value = "Error adding family details: " + err.message;

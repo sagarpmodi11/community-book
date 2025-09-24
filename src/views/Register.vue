@@ -1,4 +1,5 @@
 <template>
+  <LoadingOverlay :loading="loading" />
   <div class="item-center text-center">
     <h1 class="title">Register</h1>
     <div>
@@ -21,7 +22,7 @@
 
       <div>
         <input
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="Password"
           class="input"
           v-if="!disabled"
@@ -31,13 +32,21 @@
       </div>
       <div>
         <input
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="Re-enter Password"
           class="input"
           v-if="!disabled"
           required
           v-model="password2"
         />
+      </div>
+      <div v-if="!disabled" class="flex items-center self-end">
+        <input
+          @click="showPassword = !showPassword"
+          type="checkbox"
+          class="mr-2"
+        />
+        <label class="text-sm"> Show Password </label>
       </div>
       <button v-if="username" class="btn self-center" type="submit">
         Register
@@ -58,16 +67,19 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "vue-router";
 import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
 
 const username = ref("");
 const password = ref("");
 const password2 = ref("");
-const status = ref("");
-const error = ref("");
+const status = ref(null);
+const error = ref(null);
 const router = useRouter();
 const disabled = ref(true);
+const showPassword = ref(false);
 const collectionRef = collection(db, "families");
 const authStore = useAuthStore();
+const loading = ref(false);
 
 const validatePasswords = () => {
   if (password.value !== password2.value) {
@@ -84,6 +96,7 @@ const generateRandomNumber = () => {
 const generateUniqueFamilyId = async () => {
   let familyId;
   let exists = true;
+  loading.value = true;
 
   while (exists) {
     const randomNumber = generateRandomNumber();
@@ -95,6 +108,7 @@ const generateUniqueFamilyId = async () => {
   }
   disabled.value = false;
   username.value = familyId;
+  loading.value = false;
   return familyId;
 };
 
@@ -110,6 +124,7 @@ const createFamilyDocument = async (familyId) => {
 
 const handleRegister = async () => {
   if (validatePasswords()) {
+    loading.value = true;
     const email = `${username.value}@communitybook.com`;
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -117,11 +132,11 @@ const handleRegister = async () => {
         email,
         password.value
       );
+      loading.value = false;
       status.value = "Registration successful!";
       createFamilyDocument(username.value);
       const user = userCredential.user;
       authStore.setUser(user);
-      router.push("/");
     } catch (err) {
       if (err.code) {
         switch (err.code) {
@@ -143,21 +158,21 @@ const handleRegister = async () => {
             error.value = "An unexpected error occurred:";
         }
       } else {
+        loading.value = false;
         error.value = err.message;
       }
     }
-  }
 
+    if (status) {
+      setTimeout(() => {
+        status.value = null;
+        router.push("/");
+      }, 3000);
+    }
+  }
   if (error) {
     setTimeout(() => {
-      error.value = "";
-    }, 3000);
-  }
-
-  if (status) {
-    setTimeout(() => {
-      status.value = "";
-      router.push("/home");
+      error.value = null;
     }, 3000);
   }
 };
