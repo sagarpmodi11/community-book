@@ -109,9 +109,8 @@ import { onMounted, ref, watch } from "vue";
 import "../assets/main.css";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "vue-router";
-import { db } from "../firebase/firebase";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import { fetchStates, fetchDistricts, addFamilyDetails } from "@/firebase/crud";
 
 const store = useAuthStore();
 const router = useRouter();
@@ -128,9 +127,11 @@ const districts = ref([]);
 const loading = ref(false);
 const status = ref("");
 
-watch(country, (val) => {
+watch(country, async (val) => {
   if (val === "India") {
-    fetchStates();
+    loading.value = true;
+    states.value = await fetchStates();
+    loading.value = false;
   } else {
     states.value = [];
     districts.value = [];
@@ -139,36 +140,15 @@ watch(country, (val) => {
   }
 });
 
-watch(state, (val) => {
+watch(state, async (val) => {
   if (val) {
-    fetchDistricts(val);
+    loading.value = true;
+    districts.value = await fetchDistricts(val);
+    loading.value = false;
   } else {
     districts.value = [];
   }
 });
-
-const fetchStates = async () => {
-  loading.value = true;
-  const querySnapshot = await getDocs(collection(db, "states"));
-  states.value = [];
-  querySnapshot.forEach((doc) => {
-    states.value.push(doc.id); // State name
-  });
-  loading.value = false;
-};
-
-const fetchDistricts = async (stateId) => {
-  loading.value = true;
-  const stateDoc = await getDocs(collection(db, "states"));
-  let districtsArr = [];
-  stateDoc.forEach((doc) => {
-    if (doc.id === stateId) {
-      districtsArr = doc.data().districts || [];
-    }
-  });
-  districts.value = districtsArr;
-  loading.value = false;
-};
 
 const validateDetails = () => {
   if (
@@ -197,25 +177,32 @@ const addFamilyDetail = async () => {
     return;
   }
   if (validateDetails()) {
+    const familyId = formatFamilyId(store.user.email.split("@")[0]);
     loading.value = true;
-    try {
-      const familyId = formatFamilyId(store.user.email.split("@")[0]);
-      await updateDoc(doc(db, "families", familyId), {
-        email: email.value,
-        address1: address1.value,
-        address2: address2.value,
-        country: country.value,
-        postal: postal.value,
-        state: state.value,
-        district: district.value || "",
-        updatedAt: new Date(),
-      });
+    const result = await addFamilyDetails(
+      familyId,
+      email.value,
+      address1.value,
+      address2.value,
+      country.value,
+      postal.value,
+      state.value,
+      district.value || ""
+    );
+    if (result.success) {
+      status.value = result.message;
       loading.value = false;
-      status.value = "Family details added successfully!";
-    } catch (err) {
-      error.value = "Error adding family details: " + err.message;
-    } finally {
+      if (status.value) {
+        setTimeout(() => {
+          status.value = "";
+        }, 3000);
+      }
+    } else {
+      error.value = result.message;
       loading.value = false;
+    }
+
+    if (error.value) {
       setTimeout(() => {
         error.value = "";
       }, 3000);

@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="loading"
+    v-if="show"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
     style="pointer-events: auto"
   >
@@ -29,6 +29,6 @@
 
 <script setup>
 defineProps({
-  loading: Boolean,
+  show: Boolean,
 });
 </script>

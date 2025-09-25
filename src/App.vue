@@ -27,7 +27,7 @@
             About
           </RouterLink>
           <RouterLink
-            v-if="!useAuthStore().user"
+            v-if="!store.user"
             to="/login"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -35,7 +35,7 @@
             Login
           </RouterLink>
           <RouterLink
-            v-if="!useAuthStore().user"
+            v-if="!store.user"
             to="/register"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -43,7 +43,7 @@
             Register
           </RouterLink>
           <RouterLink
-            v-if="useAuthStore().user"
+            v-if="store.user"
             to="/family"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -51,7 +51,7 @@
             Family
           </RouterLink>
           <RouterLink
-            v-if="useAuthStore().user"
+            v-if="store.user"
             to="/login"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -60,8 +60,8 @@
             Log Out
           </RouterLink>
         </nav>
-        <p v-if="useAuthStore().user" class="text-white capitalize">
-          Welcome {{ useAuthStore().user.email.split("@")[0] }}
+        <p v-if="store.user" class="text-white capitalize">
+          Welcome {{ store.user.email.split("@")[0] }}
         </p>
       </div>
     </header>
@@ -107,17 +107,14 @@
 import { RouterLink, RouterView } from "vue-router";
 import "./assets/main.css";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { signOut } from "firebase/auth";
-import { auth } from "./firebase/firebase";
+import { logout } from "@/firebase/authService";
 
-const authStore = useAuthStore();
+const store = useAuthStore();
 
 const handleLogOut = async () => {
-  try {
-    await signOut(auth);
-    authStore.clearUser();
-  } catch (err) {
-    console.error("Error during logout:", err);
+  const result = await logout();
+  if (result.success) {
+    store.clearUser();
   }
 };
 </script>
