@@ -17,7 +17,7 @@ const getUniqueFamilyId = async () => {
 
   while (exists) {
     const randomNumber = Math.floor(10000 + Math.random() * 90000); // 10000–99999
-    familyId = `Fam${randomNumber}`;
+    familyId = `FAM${randomNumber}`;
 
     const docRef = doc(collectionRef, familyId);
     const docSnap = await getDoc(docRef);
@@ -87,10 +87,37 @@ const addFamilyDetails = async (
   }
 };
 
+const getFamilyDetails = async (familyId) => {
+  try {
+    const docRef = doc(db, "families", familyId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      if (
+        !docSnap.data().email &&
+        !docSnap.data().address1 &&
+        !docSnap.data().address2 &&
+        !docSnap.data().country &&
+        !docSnap.data().postal &&
+        !docSnap.data().state &&
+        !docSnap.data().district
+      ) {
+        return { success: false, message: "Family details not found." };
+      }
+      return { success: true, data: docSnap.data() };
+    } else {
+      return { success: false, message: "No such document!" };
+    }
+  } catch (err) {
+    errorMessage = "Error fetching family details: " + err.message;
+    return { success: false, message: errorMessage };
+  }
+};
+
 export {
   getUniqueFamilyId,
   createFamilyDocument,
   fetchStates,
   fetchDistricts,
   addFamilyDetails,
+  getFamilyDetails,
 };

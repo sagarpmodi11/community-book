@@ -13,8 +13,10 @@ app.use(createPinia());
 app.use(router);
 
 onAuthStateChanged(auth, (user) => {
-  const authStore = useAuthStore();
-  authStore.setUser(user);
+  if (user) {
+    const authStore = useAuthStore();
+    authStore.setUser(user);
+  }
 });
 
 app.mount("#app");

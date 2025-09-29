@@ -6,7 +6,8 @@
       <p class="error" v-if="error">{{ error }}</p>
     </div>
     <form @submit.prevent="handleLogin" class="form-container items-center">
-      <div>
+      <div class="input-container">
+        <label for="username" class="label">FamilyId</label>
         <input
           type="text"
           placeholder="FamilyId"
@@ -15,7 +16,8 @@
           v-model="username"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="password" class="label">Password</label>
         <input
           type="password"
           placeholder="Password"

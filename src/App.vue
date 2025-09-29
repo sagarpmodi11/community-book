@@ -52,6 +52,14 @@
           </RouterLink>
           <RouterLink
             v-if="store.user"
+            to="/members"
+            class="px-3 py-2 rounded hover:bg-blue-700"
+            active-class="bg-blue-500"
+          >
+            Members
+          </RouterLink>
+          <RouterLink
+            v-if="store.user"
             to="/login"
             class="px-3 py-2 rounded hover:bg-blue-700"
             active-class="bg-blue-500"
@@ -60,8 +68,8 @@
             Log Out
           </RouterLink>
         </nav>
-        <p v-if="store.user" class="text-white capitalize">
-          Welcome {{ store.user.email.split("@")[0] }}
+        <p v-if="store.user" class="text-white self-end">
+          Welcome {{ store.user.username }}
         </p>
       </div>
     </header>

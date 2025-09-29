@@ -1,5 +1,5 @@
 <template>
-  <LoadingOverlay :loading="loading" />
+  <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
     <h1 class="title">Register</h1>
     <div>
@@ -20,7 +20,8 @@
         </button>
       </div>
 
-      <div>
+      <div class="input-container">
+        <label for="password" class="label" v-if="!disabled">Password</label>
         <input
           :type="showPassword ? 'text' : 'password'"
           placeholder="Password"
@@ -30,7 +31,10 @@
           v-model="password"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="password2" class="label" v-if="!disabled"
+          >Re-enter Password</label
+        >
         <input
           :type="showPassword ? 'text' : 'password'"
           placeholder="Re-enter Password"
