@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { db } from "../firebase/firebase";
+import { db } from "../firebase/firebaseConfig";
 import { collection, doc, setDoc } from "firebase/firestore";
 import statesData from "../assets/states.json";
 

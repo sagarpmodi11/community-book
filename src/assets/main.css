@@ -35,6 +35,14 @@
   @apply border-2 border-gray-300 w-64 rounded px-2 py-1 my-2 focus:outline-none focus:border-blue-500 sm:w-100;
 }
 
+.label {
+  @apply font-semibold text-xs text-blue-500;
+}
+
+.input-container {
+  @apply flex flex-col w-full text-left;
+}
+
 .title {
   @apply text-center text-3xl font-bold mb-4;
 }

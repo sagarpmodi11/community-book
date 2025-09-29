@@ -1,43 +1,51 @@
 <template>
-  <div
-    v-if="loading"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-    style="pointer-events: auto"
-  >
-    <svg
-      class="animate-spin h-8 w-8 text-blue-600"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        class="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        stroke-width="4"
-      ></circle>
-      <path
-        class="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v8z"
-      ></path>
-    </svg>
-  </div>
+  <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
     <h1 class="title">Family Details</h1>
     <div>
       <p class="status" v-if="status">{{ status }}</p>
       <p class="error" v-if="error">{{ error }}</p>
     </div>
-    <form @submit.prevent="addFamilyDetail" class="form-container items-start">
-      <div class="flex flex-row justify-center w-full">
-        <p class="capitalize" v-if="store.user">
-          Family Id: {{ store.user.email.split("@")[0] }}
+
+    <div v-if="isFamilyAvailable" class="form-container items-end">
+      <img
+        src="../assets/icons/edit-text.png"
+        alt="Logo"
+        class="h-7 w-7 ml-1 cursor-pointer"
+        @click="populateFamilyDetails"
+        title="Edit Family Details"
+      />
+      <div class="grid grid-cols-2 gap-4 w-full text-left capitalize">
+        <p>FamilyId :</p>
+        <p class="uppercase">{{ store.user.username }}</p>
+        <p>Email :</p>
+        <p class="lowercase">{{ email }}</p>
+        <p>Address :</p>
+        <p>
+          {{ address1 }},
+          {{ address2 }}
         </p>
+        <p>State/Province :</p>
+        <p>{{ state }}</p>
+        <p>Postal Code :</p>
+        <p>{{ postal }}</p>
+        <p v-if="country === 'India'">District :</p>
+        <p>{{ district }}</p>
+        <p>Country :</p>
+        <p>{{ country }}</p>
       </div>
-      <div>
+    </div>
+
+    <form
+      v-if="!isFamilyAvailable"
+      @submit.prevent="addFamilyDetail"
+      class="form-container items-start"
+    >
+      <div class="flex flex-row justify-center w-full">
+        <p v-if="store.user">Family Id: {{ store.user.username }}</p>
+      </div>
+      <div class="input-container">
+        <label for="email" class="label">Email</label>
         <input
           type="Email"
           placeholder="Email"
@@ -46,7 +54,8 @@
           v-model="email"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="country" class="label">Country</label>
         <select v-model="country" class="input" required>
           <option value="" disabled selected>Select Country</option>
           <option>India</option>
@@ -56,7 +65,8 @@
           <option>Australia</option>
         </select>
       </div>
-      <div>
+      <div class="input-container">
+        <label for="address1" class="label">Address Line 1</label>
         <input
           type="text"
           placeholder="Address Line 1"
@@ -65,7 +75,8 @@
           v-model="address1"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="address2" class="label">Address Line 2</label>
         <input
           type="text"
           placeholder="Address Line 2"
@@ -74,7 +85,8 @@
           v-model="address2"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="postal" class="label">Postal Code</label>
         <input
           type="text"
           placeholder="Postal Code"
@@ -83,7 +95,8 @@
           v-model="postal"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="state" class="label">State/Province</label>
         <input
           v-if="country !== 'India'"
           type="text"
@@ -93,7 +106,7 @@
           v-model="state"
         />
       </div>
-      <div>
+      <div class="input-container">
         <select
           v-if="country === 'India'"
           v-model="state"
@@ -106,7 +119,10 @@
           </option>
         </select>
       </div>
-      <div>
+      <div class="input-container">
+        <label for="district" class="label" v-if="country === 'India'"
+          >District</label
+        >
         <select
           v-if="country === 'India'"
           v-model="district"
@@ -126,6 +142,10 @@
 
       <button class="btn self-center" type="submit">Add Details</button>
     </form>
+    <p v-if="isFamilyAvailable">
+      Want to add family members?
+      <a @click="redirectMembers" class="btn"> Add Members</a>
+    </p>
   </div>
 </template>
 
@@ -134,8 +154,13 @@ import { onMounted, ref, watch } from "vue";
 import "../assets/main.css";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "vue-router";
-import { db } from "../firebase/firebase";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import {
+  fetchStates,
+  fetchDistricts,
+  addFamilyDetails,
+  getFamilyDetails,
+} from "@/firebase/crud";
 
 const store = useAuthStore();
 const router = useRouter();
@@ -151,10 +176,13 @@ const district = ref("");
 const districts = ref([]);
 const loading = ref(false);
 const status = ref("");
+const isFamilyAvailable = ref(false);
 
-watch(country, (val) => {
+watch(country, async (val) => {
   if (val === "India") {
-    fetchStates();
+    loading.value = true;
+    states.value = await fetchStates();
+    loading.value = false;
   } else {
     states.value = [];
     districts.value = [];
@@ -163,36 +191,15 @@ watch(country, (val) => {
   }
 });
 
-watch(state, (val) => {
+watch(state, async (val) => {
   if (val) {
-    fetchDistricts(val);
+    loading.value = true;
+    districts.value = await fetchDistricts(val);
+    loading.value = false;
   } else {
     districts.value = [];
   }
 });
-
-const fetchStates = async () => {
-  loading.value = true;
-  const querySnapshot = await getDocs(collection(db, "states"));
-  states.value = [];
-  querySnapshot.forEach((doc) => {
-    states.value.push(doc.id); // State name
-  });
-  loading.value = false;
-};
-
-const fetchDistricts = async (stateId) => {
-  loading.value = true;
-  const stateDoc = await getDocs(collection(db, "states"));
-  let districtsArr = [];
-  stateDoc.forEach((doc) => {
-    if (doc.id === stateId) {
-      districtsArr = doc.data().districts || [];
-    }
-  });
-  districts.value = districtsArr;
-  loading.value = false;
-};
 
 const validateDetails = () => {
   if (
@@ -210,35 +217,39 @@ const validateDetails = () => {
   return true;
 };
 
-const formatFamilyId = (id) => {
-  if (!id) return "";
-  return id.charAt(0).toUpperCase() + id.slice(1);
-};
-
 const addFamilyDetail = async () => {
   if (!store.user) {
     error.value = "User not authenticated.";
     return;
   }
   if (validateDetails()) {
+    const familyId = store.user.username;
     loading.value = true;
-    try {
-      const familyId = formatFamilyId(store.user.email.split("@")[0]);
-      await updateDoc(doc(db, "families", familyId), {
-        email: email.value,
-        address1: address1.value,
-        address2: address2.value,
-        country: country.value,
-        postal: postal.value,
-        state: state.value,
-        district: district.value || "",
-        updatedAt: new Date(),
-      });
-      status.value = "Family details added successfully!";
-    } catch (err) {
-      error.value = "Error adding family details: " + err.message;
-    } finally {
+    const result = await addFamilyDetails(
+      familyId,
+      email.value,
+      address1.value,
+      address2.value,
+      country.value,
+      postal.value,
+      state.value,
+      district.value || ""
+    );
+    if (result.success) {
+      status.value = result.message;
       loading.value = false;
+      isFamilyAvailable.value = true;
+      if (status.value) {
+        setTimeout(() => {
+          status.value = "";
+        }, 3000);
+      }
+    } else {
+      error.value = result.message;
+      loading.value = false;
+    }
+
+    if (error.value) {
       setTimeout(() => {
         error.value = "";
       }, 3000);
@@ -247,13 +258,44 @@ const addFamilyDetail = async () => {
   }
 };
 
-onMounted(() => {
+const populateFamilyDetails = async () => {
   if (!store.user) {
     redirectLogin;
+  } else {
+    loading.value = true;
+    isFamilyAvailable.value = false;
+    loading.value = false;
+  }
+};
+
+onMounted(async () => {
+  if (!store.user) {
+    redirectLogin;
+  } else {
+    loading.value = true;
+    const familyId = store.user.username;
+    const result = await getFamilyDetails(familyId);
+    if (result.success && result.data) {
+      isFamilyAvailable.value = true;
+      email.value = result.data.email;
+      address1.value = result.data.address1;
+      address2.value = result.data.address2;
+      country.value = result.data.country;
+      postal.value = result.data.postal;
+      state.value = result.data.state;
+      district.value = result.data.district;
+    } else {
+      isFamilyAvailable.value = false;
+    }
+    loading.value = false;
   }
 });
 
 const redirectLogin = () => {
   router.push("/login");
+};
+
+const redirectMembers = () => {
+  router.push("/members");
 };
 </script>

@@ -1,4 +1,5 @@
 <template>
+  <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
     <h1 class="title">Register</h1>
     <div>
@@ -19,9 +20,10 @@
         </button>
       </div>
 
-      <div>
+      <div class="input-container">
+        <label for="password" class="label" v-if="!disabled">Password</label>
         <input
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="Password"
           class="input"
           v-if="!disabled"
@@ -29,15 +31,26 @@
           v-model="password"
         />
       </div>
-      <div>
+      <div class="input-container">
+        <label for="password2" class="label" v-if="!disabled"
+          >Re-enter Password</label
+        >
         <input
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="Re-enter Password"
           class="input"
           v-if="!disabled"
           required
           v-model="password2"
         />
+      </div>
+      <div v-if="!disabled" class="flex items-center self-end">
+        <input
+          @click="showPassword = !showPassword"
+          type="checkbox"
+          class="mr-2"
+        />
+        <label class="text-sm"> Show Password </label>
       </div>
       <button v-if="username" class="btn self-center" type="submit">
         Register
@@ -53,21 +66,22 @@
 <script setup>
 import { ref } from "vue";
 import "../assets/main.css";
-import { auth, db } from "../firebase/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "vue-router";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore";
+import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import { signup } from "@/firebase/authService";
+import { getUniqueFamilyId, createFamilyDocument } from "@/firebase/crud";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const username = ref("");
 const password = ref("");
 const password2 = ref("");
-const status = ref("");
-const error = ref("");
+const status = ref(null);
+const error = ref(null);
 const router = useRouter();
 const disabled = ref(true);
-const collectionRef = collection(db, "families");
-const authStore = useAuthStore();
+const showPassword = ref(false);
+const loading = ref(false);
+const store = useAuthStore();
 
 const validatePasswords = () => {
   if (password.value !== password2.value) {
@@ -77,87 +91,45 @@ const validatePasswords = () => {
   return true;
 };
 
-const generateRandomNumber = () => {
-  return Math.floor(10000 + Math.random() * 90000); // 10000–99999
-};
-
 const generateUniqueFamilyId = async () => {
-  let familyId;
-  let exists = true;
-
-  while (exists) {
-    const randomNumber = generateRandomNumber();
-    familyId = `Fam${randomNumber}`;
-
-    const docRef = doc(collectionRef, familyId);
-    const docSnap = await getDoc(docRef);
-    exists = docSnap.exists();
-  }
+  loading.value = true;
+  const familyId = await getUniqueFamilyId();
   disabled.value = false;
   username.value = familyId;
-  return familyId;
+  loading.value = false;
 };
 
-const createFamilyDocument = async (familyId) => {
-  try {
-    await setDoc(doc(collectionRef, familyId), {
-      createdAt: new Date(),
-    });
-  } catch (e) {
-    error.value = "Error creating family document: " + e.message;
+const createFamily = async (familyId) => {
+  const result = await createFamilyDocument(familyId);
+  if (!result.success) {
+    error.value = result.message;
   }
 };
 
 const handleRegister = async () => {
   if (validatePasswords()) {
-    const email = `${username.value}@communitybook.com`;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password.value
-      );
-      status.value = "Registration successful!";
-      createFamilyDocument(username.value);
-      const user = userCredential.user;
-      authStore.setUser(user);
-      router.push("/");
-    } catch (err) {
-      if (err.code) {
-        switch (err.code) {
-          case "auth/invalid-email":
-            error.value = "Invalid email address.";
-            break;
-          case "auth/email-already-in-use":
-            error.value = "This email is already registered.";
-            break;
-          case "auth/weak-password":
-            error.value =
-              "The password is too weak. Please choose a stronger password.";
-            break;
-          case "auth/operation-not-allowed":
-            error.value =
-              "Email/password sign-in is not enabled. Please contact support.";
-            break;
-          default:
-            error.value = "An unexpected error occurred:";
-        }
-      } else {
-        error.value = err.message;
-      }
+    loading.value = true;
+    const result = await signup(username.value, password.value);
+
+    if (result.success) {
+      await createFamily(username.value);
+      status.value = result.message;
+      store.setUser(result.user);
+    } else {
+      error.value = result.message;
+    }
+    loading.value = false;
+
+    if (status) {
+      setTimeout(() => {
+        status.value = null;
+        router.push("/");
+      }, 3000);
     }
   }
-
   if (error) {
     setTimeout(() => {
-      error.value = "";
-    }, 3000);
-  }
-
-  if (status) {
-    setTimeout(() => {
-      status.value = "";
-      router.push("/home");
+      error.value = null;
     }, 3000);
   }
 };
