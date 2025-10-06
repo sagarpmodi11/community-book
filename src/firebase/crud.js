@@ -6,10 +6,13 @@ import {
   setDoc,
   getDocs,
   updateDoc,
+  query,
+  where,
+  orderBy,
 } from "firebase/firestore";
 
 const collectionRef = collection(db, "families");
-const errorMessage = "";
+let errorMessage = "";
 
 const getUniqueFamilyId = async () => {
   let familyId;
@@ -26,9 +29,10 @@ const getUniqueFamilyId = async () => {
   return familyId;
 };
 
-const createFamilyDocument = async (familyId) => {
+const createFamilyDocument = async (familyId, email) => {
   try {
     await setDoc(doc(collectionRef, familyId), {
+      email: email,
       createdAt: new Date(),
     });
     return { success: true };
@@ -58,31 +62,56 @@ const fetchDistricts = async (stateId) => {
   return districtsArr;
 };
 
-const addFamilyDetails = async (
-  familyId,
-  email,
-  address1,
-  address2,
-  country,
-  postal,
-  state,
-  district
-) => {
+const addFamilyDetails = async (familyId, familyData) => {
   try {
-    await updateDoc(doc(db, "families", familyId), {
-      email: email,
-      address1: address1,
-      address2: address2,
-      country: country,
-      postal: postal,
-      state: state,
-      district: district || "",
-      updatedAt: new Date(),
+    await updateDoc(doc(collectionRef, familyId), {
+      familyData,
     });
     const status = "Family details added successfully!";
     return { success: true, message: status };
   } catch (err) {
     errorMessage = "Error adding family details: " + err.message;
+    return { success: false, message: errorMessage };
+  }
+};
+
+const getMembers = async (familyId) => {
+  try {
+    const familyDocRef = doc(collectionRef, familyId);
+    const familyDocSnap = await getDoc(familyDocRef);
+    if (familyDocSnap.exists()) {
+      return { success: true, data: familyDocSnap.data().members || [] };
+    }
+  } catch (err) {
+    errorMessage = "Error adding member details: " + err.message;
+    return { success: false, message: errorMessage };
+  }
+};
+
+const addMemberDetails = async (familyId, memberData) => {
+  const familyDocRef = doc(collectionRef, familyId);
+  try {
+    const result = await getMembers(familyId);
+    if (result.success) {
+      console.log(result.data);
+      const members = result.data;
+      members.sort((a, b) => a.memberId - b.memberId);
+      const length = members.length;
+      memberData.memberId = members[length - 1]
+        ? members[length - 1].memberId + 1
+        : 1;
+      members.push(memberData);
+
+      await updateDoc(familyDocRef, {
+        members: members,
+      });
+      const status = "Member details added successfully!";
+      return { success: true, message: status };
+    } else {
+      return { success: false, message: "Family does not exist." };
+    }
+  } catch (err) {
+    errorMessage = "Error adding member details: " + err.message;
     return { success: false, message: errorMessage };
   }
 };
@@ -113,11 +142,27 @@ const getFamilyDetails = async (familyId) => {
   }
 };
 
+const checkEmailExists = async (email) => {
+  try {
+    const q = query(collectionRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      return { success: true };
+    }
+    return { success: false };
+  } catch (err) {
+    return { success: false, message: errorMessage };
+  }
+};
+
 export {
   getUniqueFamilyId,
   createFamilyDocument,
   fetchStates,
   fetchDistricts,
   addFamilyDetails,
+  addMemberDetails,
   getFamilyDetails,
+  getMembers,
+  checkEmailExists,
 };

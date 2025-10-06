@@ -15,9 +15,9 @@
         @click="populateFamilyDetails"
         title="Edit Family Details"
       />
-      <div class="grid grid-cols-2 gap-4 w-full text-left capitalize">
+      <div class="card-container">
         <p>FamilyId :</p>
-        <p class="uppercase">{{ store.user.username }}</p>
+        <p class="uppercase">{{ authStore.user.username }}</p>
         <p>Email :</p>
         <p class="lowercase">{{ email }}</p>
         <p>Address :</p>
@@ -41,18 +41,9 @@
       @submit.prevent="addFamilyDetail"
       class="form-container items-start"
     >
-      <div class="flex flex-row justify-center w-full">
-        <p v-if="store.user">Family Id: {{ store.user.username }}</p>
-      </div>
-      <div class="input-container">
-        <label for="email" class="label">Email</label>
-        <input
-          type="Email"
-          placeholder="Email"
-          class="input"
-          required
-          v-model="email"
-        />
+      <div class="input-container mb-3 items-center">
+        <p v-if="authStore.user">Family Id: {{ authStore.user.username }}</p>
+        <p>Email : {{ email }}</p>
       </div>
       <div class="input-container">
         <label for="country" class="label">Country</label>
@@ -142,10 +133,13 @@
 
       <button class="btn self-center" type="submit">Add Details</button>
     </form>
-    <p v-if="isFamilyAvailable">
-      Want to add family members?
-      <a @click="redirectMembers" class="btn"> Add Members</a>
-    </p>
+    <div class="link-container">
+      <p v-if="isFamilyAvailable">Want to add family members?</p>
+      <a v-if="isFamilyAvailable" @click="redirectMembers" class="btn">
+        Add Members</a
+      >
+    </div>
+    <button v-if="showBackButton" class="btn" @click="backAction">Back</button>
   </div>
 </template>
 
@@ -161,8 +155,10 @@ import {
   addFamilyDetails,
   getFamilyDetails,
 } from "@/firebase/crud";
+import { useFamilyStore } from "@/stores/familyDetailsStore";
 
-const store = useAuthStore();
+const authStore = useAuthStore();
+const familyStore = useFamilyStore();
 const router = useRouter();
 const email = ref("");
 const address1 = ref("");
@@ -177,6 +173,7 @@ const districts = ref([]);
 const loading = ref(false);
 const status = ref("");
 const isFamilyAvailable = ref(false);
+const showBackButton = ref(false);
 
 watch(country, async (val) => {
   if (val === "India") {
@@ -203,7 +200,6 @@ watch(state, async (val) => {
 
 const validateDetails = () => {
   if (
-    !email.value ||
     !address1.value ||
     !address2.value ||
     !country.value ||
@@ -218,24 +214,26 @@ const validateDetails = () => {
 };
 
 const addFamilyDetail = async () => {
-  if (!store.user) {
+  if (!authStore.user) {
     error.value = "User not authenticated.";
     return;
   }
   if (validateDetails()) {
-    const familyId = store.user.username;
+    const familyId = authStore.user.username;
     loading.value = true;
-    const result = await addFamilyDetails(
-      familyId,
-      email.value,
-      address1.value,
-      address2.value,
-      country.value,
-      postal.value,
-      state.value,
-      district.value || ""
-    );
+    const familyData = {
+      address1: address1.value,
+      address2: address2.value,
+      country: country.value,
+      postal: postal.value,
+      state: state.value,
+      district: district.value || "",
+      updatedAt: new Date(),
+    };
+    const result = await addFamilyDetails(familyId, familyData);
     if (result.success) {
+      familyData.familyId = familyId;
+      familyStore.setFamily(familyData);
       status.value = result.message;
       loading.value = false;
       isFamilyAvailable.value = true;
@@ -259,21 +257,22 @@ const addFamilyDetail = async () => {
 };
 
 const populateFamilyDetails = async () => {
-  if (!store.user) {
+  if (!authStore.user) {
     redirectLogin;
   } else {
     loading.value = true;
     isFamilyAvailable.value = false;
     loading.value = false;
+    showBackButton.value = true;
   }
 };
 
 onMounted(async () => {
-  if (!store.user) {
+  if (!authStore.user) {
     redirectLogin;
   } else {
     loading.value = true;
-    const familyId = store.user.username;
+    const familyId = authStore.user.username;
     const result = await getFamilyDetails(familyId);
     if (result.success && result.data) {
       isFamilyAvailable.value = true;
@@ -284,12 +283,31 @@ onMounted(async () => {
       postal.value = result.data.postal;
       state.value = result.data.state;
       district.value = result.data.district;
+      result.data.familyId = familyId;
+      familyStore.setFamily(result.data);
     } else {
       isFamilyAvailable.value = false;
     }
     loading.value = false;
   }
 });
+
+const backAction = () => {
+  if (familyStore.family) {
+    email.value = familyStore.family.email;
+    address1.value = familyStore.family.address1;
+    address2.value = familyStore.family.address2;
+    country.value = familyStore.family.country;
+    postal.value = familyStore.family.postal;
+    state.value = familyStore.family.state;
+    district.value = familyStore.family.district;
+    isFamilyAvailable.value = true;
+    showBackButton.value = false;
+  } else {
+    isFamilyAvailable.value = false;
+    showBackButton.value = false;
+  }
+};
 
 const redirectLogin = () => {
   router.push("/login");

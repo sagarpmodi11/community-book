@@ -1,33 +1,60 @@
 <template>
   <LoadingOverlay :show="loading" />
   <div class="item-center text-center">
-    <h1 class="title">Family Details</h1>
+    <h1 class="title">Member Details</h1>
     <div>
       <p class="status" v-if="status">{{ status }}</p>
       <p class="error" v-if="error">{{ error }}</p>
     </div>
 
-    <div v-if="isMemberAvailable" class="form-container items-end">
-      <img
+    <div v-if="isMemberAvailable">
+      <!-- <img
         src="../assets/icons/edit-text.png"
         alt="Logo"
         class="h-7 w-7 ml-1 cursor-pointer"
         @click=""
         title="Edit Member Details"
-      />
-      <div class="grid grid-cols-2 gap-4 w-full text-left capitalize">
+      /> -->
+      <div class="flex flex-row justify-center w-full">
         <p>FamilyId :</p>
-        <p class="uppercase">{{ store.user.username }}</p>
+        <p class="uppercase">{{ authStore.user.username }}</p>
+      </div>
+      <div
+        v-for="member in members"
+        :key="member.memberId"
+        class="flex justify-center"
+      >
+        <div class="member-container">
+          <p>Name :</p>
+          <p class="capitalize">
+            {{ member.firstName }} {{ member.middleName }} {{ member.lastName }}
+          </p>
+          <p>DOB :</p>
+          <p>{{ member.dob }}</p>
+          <p>Gender :</p>
+          <p class="capitalize">{{ member.gender }}</p>
+          <p>Email :</p>
+          <p class="lowercase">{{ member.email }}</p>
+          <p>Mobile No :</p>
+          <p v-if="!member.hidePhone">{{ member.mobile }}</p>
+          <p v-else class="italic text-gray-400">Hidden</p>
+          <p>Education :</p>
+          <p class="capitalize">{{ member.education }}</p>
+          <p>Occupation :</p>
+          <p class="capitalize">{{ member.occupation }}</p>
+          <p>Marital Status :</p>
+          <p class="capitalize">{{ member.maritalStatus }}</p>
+        </div>
       </div>
     </div>
 
     <form
       v-if="!isMemberAvailable"
-      @submit.prevent="addMemberDetails"
+      @submit.prevent="addMemberDetail"
       class="form-container items-start"
     >
       <div class="flex flex-row justify-center w-full">
-        <p v-if="store.user">Family Id: {{ store.user.username }}</p>
+        <p v-if="authStore.user">Family Id: {{ authStore.user.username }}</p>
       </div>
       <div class="input-container">
         <label for="firstname" class="label">First Name</label>
@@ -45,7 +72,6 @@
           type="text"
           placeholder="Middle Name"
           class="input capitalize"
-          required
           v-model="middleName"
         />
       </div>
@@ -58,6 +84,39 @@
           required
           v-model="lastName"
         />
+      </div>
+      <div class="input-container">
+        <label for="dob" class="label">Date of Birth</label>
+        <input type="date" id="dob" class="input" required v-model="dob" />
+      </div>
+      <div class="input-container">
+        <label for="gender" class="label">Gender</label>
+        <div class="flex flex-row w-full text-left gap-5">
+          <label>
+            <input
+              type="radio"
+              id="male"
+              value="Male"
+              v-model="gender"
+            />Male</label
+          >
+          <label>
+            <input
+              type="radio"
+              id="female"
+              value="Female"
+              v-model="gender"
+            />Female</label
+          >
+          <label>
+            <input
+              type="radio"
+              id="other"
+              value="Other"
+              v-model="gender"
+            />Other</label
+          >
+        </div>
       </div>
       <div class="input-container">
         <label for="email" class="label">Email</label>
@@ -80,11 +139,7 @@
         />
       </div>
       <div class="flex items-center self-end">
-        <input
-          @click="showPhone = !showPhone"
-          type="checkbox"
-          class="mr-2"
-        />
+        <input @click="hidePhone = !hidePhone" type="checkbox" class="mr-2" />
         <label class="text-sm"> Hide </label>
       </div>
       <div class="input-container">
@@ -110,10 +165,22 @@
       <div class="input-container">
         <label for="married" class="label">Marital Status</label>
         <div class="flex flex-row w-full text-left gap-5">
-        <input @click="changeMarritalStatus" type="radio" id="married" value="Married" v-model="maritalStatus">Married
-        </input>
-        <input @click="changeMarritalStatus" type="radio" id="unmarried" value="Unmarried" v-model="maritalStatus">Unmarried
-        </input>
+          <label
+            ><input
+              type="radio"
+              id="unmarried"
+              value="Unmarried"
+              v-model="maritalStatus"
+            />Unmarried</label
+          >
+          <label
+            ><input
+              type="radio"
+              id="married"
+              value="Married"
+              v-model="maritalStatus"
+            />Married</label
+          >
         </div>
       </div>
 
@@ -123,19 +190,14 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import "../assets/main.css";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "vue-router";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
-import {
-  fetchStates,
-  fetchDistricts,
-  addFamilyDetails,
-  getFamilyDetails,
-} from "@/firebase/crud";
+import { addMemberDetails, getMembers } from "@/firebase/crud";
 
-const store = useAuthStore();
+const authStore = useAuthStore();
 const router = useRouter();
 const error = ref("");
 const loading = ref(false);
@@ -144,37 +206,86 @@ const isMemberAvailable = ref(false);
 const firstName = ref("");
 const middleName = ref("");
 const lastName = ref("");
+const dob = ref("");
 const email = ref("");
 const mobile = ref("");
 const education = ref("");
 const occupation = ref("");
 const maritalStatus = ref("Unmarried");
-const showPhone = ref(false);
+const gender = ref("Male");
+const hidePhone = ref(false);
+const members = ref([]);
 
-const changeMarritalStatus = ()=>{
-    if(maritalStatus.value == "Unmarried"){
-        maritalStatus.value = "Married"
-    }else{
-        maritalStatus.value = "Unmarried"
-    }
-}
-
-const phoneValidation = ()=>{
-    if(mobile.value){
-       const phoneRegex = /^\+?[0-9]{10,15}$/;
-        if (!phoneRegex.test(mobile.value)) {
-        error.value = "Please enter a valid mobile number (digits only).";
-        mobile.value = ""
-        return false;
+const phoneValidation = () => {
+  if (mobile.value) {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (!phoneRegex.test(mobile.value)) {
+      error.value = "Please enter a valid mobile number (digits only).";
+      mobile.value = "";
+      return false;
     }
     error.value = "";
-    return true; 
-    }
-}
+    return true;
+  }
+};
 
-const addMemberDetails = () =>{
-    if(phoneValidation){
-
+const addMemberDetail = async () => {
+  if (!authStore.user) {
+    error.value = "User not authenticated.";
+    return;
+  }
+  if (phoneValidation) {
+    loading.value = true;
+    const memberData = {
+      firstName: firstName.value,
+      middleName: middleName.value,
+      lastName: lastName.value,
+      dob: dob.value,
+      email: email.value,
+      mobile: mobile.value,
+      education: education.value,
+      occupation: occupation.value,
+      maritalStatus: maritalStatus.value,
+      gender: gender.value,
+      hidePhone: hidePhone.value,
+    };
+    const familyId = authStore.user.username;
+    const result = await addMemberDetails(familyId, memberData);
+    if (result.success) {
+      status.value = result.message;
+      loading.value = false;
+      isMemberAvailable.value = true;
+    } else {
+      error.value = result.message;
+      loading.value = false;
     }
-}
+    if (error.value) {
+      setTimeout(() => {
+        error.value = "";
+      }, 3000);
+    }
+    if (status.value) {
+      setTimeout(() => {
+        status.value = "";
+      }, 3000);
+    }
+    return;
+  }
+};
+
+onMounted(async () => {
+  if (!authStore.user) {
+    router.push("/login");
+  } else {
+    loading.value = true;
+    const result = await getMembers(authStore.user.username);
+    if (result.success) {
+      members.value = result.data;
+      isMemberAvailable.value = true;
+    } else {
+      isMemberAvailable.value = false;
+    }
+    loading.value = false;
+  }
+});
 </script>

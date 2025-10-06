@@ -29,10 +29,10 @@
       <button class="btn" type="submit">Login</button>
     </form>
 
-    <p>
-      Don't have an account yet?
+    <div class="link-container">
+      <p>Don't have an account yet?</p>
       <a @click="redirectRegister" class="btn"> Register now</a>
-    </p>
+    </div>
   </div>
 </template>
 

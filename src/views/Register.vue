@@ -19,6 +19,17 @@
           Generate FamilyId
         </button>
       </div>
+      <div class="input-container">
+        <label for="email" class="label" v-if="!disabled">Email</label>
+        <input
+          type="Email"
+          placeholder="Email"
+          class="input lowercase"
+          v-if="!disabled"
+          required
+          v-model="email"
+        />
+      </div>
 
       <div class="input-container">
         <label for="password" class="label" v-if="!disabled">Password</label>
@@ -56,10 +67,10 @@
         Register
       </button>
     </form>
-    <p>
-      Already have an account?
+    <div class="link-container">
+      <p>Already have an account?</p>
       <a @click="redirectLogin" class="btn"> Login</a>
-    </p>
+    </div>
   </div>
 </template>
 
@@ -73,6 +84,7 @@ import { getUniqueFamilyId, createFamilyDocument } from "@/firebase/crud";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const username = ref("");
+const email = ref("");
 const password = ref("");
 const password2 = ref("");
 const status = ref(null);
@@ -99,8 +111,8 @@ const generateUniqueFamilyId = async () => {
   loading.value = false;
 };
 
-const createFamily = async (familyId) => {
-  const result = await createFamilyDocument(familyId);
+const createFamily = async (familyId, email) => {
+  const result = await createFamilyDocument(familyId, email);
   if (!result.success) {
     error.value = result.message;
   }
@@ -109,10 +121,10 @@ const createFamily = async (familyId) => {
 const handleRegister = async () => {
   if (validatePasswords()) {
     loading.value = true;
-    const result = await signup(username.value, password.value);
+    const result = await signup(username.value, password.value, email.value);
 
     if (result.success) {
-      await createFamily(username.value);
+      await createFamily(username.value, email.value);
       status.value = result.message;
       store.setUser(result.user);
     } else {
@@ -120,14 +132,14 @@ const handleRegister = async () => {
     }
     loading.value = false;
 
-    if (status) {
+    if (status.value) {
       setTimeout(() => {
         status.value = null;
         router.push("/");
       }, 3000);
     }
   }
-  if (error) {
+  if (error.value) {
     setTimeout(() => {
       error.value = null;
     }, 3000);

@@ -8,11 +8,11 @@
 }
 
 .header-container {
-  @apply flex flex-col justify-center bg-blue-600 text-white p-4 sm:justify-between sm:flex-row;
+  @apply flex flex-col justify-center bg-blue-600 text-white sticky top-0 z-40 p-4 md:justify-between md:flex-row;
 }
 
 .nav-container {
-  @apply flex flex-col items-stretch sm:flex-row sm:space-x-4;
+  @apply flex flex-col sm:flex-row sm:space-x-4 sm:mt-0 mt-3;
 }
 
 .footer-container {
@@ -25,6 +25,20 @@
 
 .form-container {
   @apply flex flex-col max-w-md mx-auto my-8 p-6 bg-white rounded-lg shadow-md;
+}
+
+.member-container {
+  @apply grid grid-cols-2 my-4 p-4 w-120 cursor-pointer text-xs bg-white rounded-lg shadow-md text-left capitalize 
+  md:max-w-120 md:p-4 md:text-base
+  sm:max-w-120 sm:text-base;
+}
+
+.card-container {
+  @apply grid grid-cols-2 gap-2 w-full text-left capitalize text-xs md:gap-4 max-w-full md:text-left md:text-base sm:text-base;
+}
+
+.link-container {
+  @apply flex flex-col items-center mt-4 space-y-1;
 }
 
 .btn {
