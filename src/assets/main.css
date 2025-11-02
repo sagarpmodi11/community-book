@@ -27,14 +27,14 @@
   @apply flex flex-col max-w-md mx-auto my-8 p-6 bg-white rounded-lg shadow-md;
 }
 
-.member-container {
+/* .member-container {
   @apply grid grid-cols-2 my-4 p-4 w-120 cursor-pointer text-xs bg-white rounded-lg shadow-md text-left capitalize 
   md:max-w-120 md:p-4 md:text-base
   sm:max-w-120 sm:text-base;
-}
+} */
 
 .card-container {
-  @apply grid grid-cols-2 gap-2 w-full text-left capitalize text-xs md:gap-4 max-w-full md:text-left md:text-base sm:text-base;
+  @apply grid grid-cols-2 gap-2 w-full text-left capitalize text-xs md:gap-4 md:w-100 md:text-left md:text-base sm:max-w-120 sm:text-base md:my-2;
 }
 
 .link-container {

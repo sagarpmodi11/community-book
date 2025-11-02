@@ -15,9 +15,9 @@
           disabled
           v-model="username"
         />
-        <button @click="generateUniqueFamilyId" type="button" class="btn">
+        <AppButton @click="generateUniqueFamilyId">
           Generate FamilyId
-        </button>
+        </AppButton>
       </div>
       <div class="input-container">
         <label for="email" class="label" v-if="!disabled">Email</label>
@@ -63,9 +63,9 @@
         />
         <label class="text-sm"> Show Password </label>
       </div>
-      <button v-if="username" class="btn self-center" type="submit">
+      <AppButton v-if="username" class="btn self-center" type="submit">
         Register
-      </button>
+      </AppButton>
     </form>
     <div class="link-container">
       <p>Already have an account?</p>
@@ -79,6 +79,7 @@ import { ref } from "vue";
 import "../assets/main.css";
 import { useRouter } from "vue-router";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import AppButton from "@/components/AppButton.vue";
 import { signup } from "@/firebase/authService";
 import { getUniqueFamilyId, createFamilyDocument } from "@/firebase/crud";
 import { useAuthStore } from "@/stores/useAuthStore";

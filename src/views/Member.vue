@@ -8,13 +8,6 @@
     </div>
 
     <div v-if="isMemberAvailable">
-      <!-- <img
-        src="../assets/icons/edit-text.png"
-        alt="Logo"
-        class="h-7 w-7 ml-1 cursor-pointer"
-        @click=""
-        title="Edit Member Details"
-      /> -->
       <div class="flex flex-row justify-center w-full">
         <p>FamilyId :</p>
         <p class="uppercase">{{ authStore.user.username }}</p>
@@ -24,27 +17,7 @@
         :key="member.memberId"
         class="flex justify-center"
       >
-        <div class="member-container">
-          <p>Name :</p>
-          <p class="capitalize">
-            {{ member.firstName }} {{ member.middleName }} {{ member.lastName }}
-          </p>
-          <p>DOB :</p>
-          <p>{{ member.dob }}</p>
-          <p>Gender :</p>
-          <p class="capitalize">{{ member.gender }}</p>
-          <p>Email :</p>
-          <p class="lowercase">{{ member.email }}</p>
-          <p>Mobile No :</p>
-          <p v-if="!member.hidePhone">{{ member.mobile }}</p>
-          <p v-else class="italic text-gray-400">Hidden</p>
-          <p>Education :</p>
-          <p class="capitalize">{{ member.education }}</p>
-          <p>Occupation :</p>
-          <p class="capitalize">{{ member.occupation }}</p>
-          <p>Marital Status :</p>
-          <p class="capitalize">{{ member.maritalStatus }}</p>
-        </div>
+        <AppCard :data="member" />
       </div>
     </div>
 
@@ -56,135 +29,74 @@
       <div class="flex flex-row justify-center w-full">
         <p v-if="authStore.user">Family Id: {{ authStore.user.username }}</p>
       </div>
-      <div class="input-container">
-        <label for="firstname" class="label">First Name</label>
-        <input
-          type="text"
-          placeholder="First Name"
-          class="input capitalize"
-          required
-          v-model="firstName"
-        />
-      </div>
-      <div class="input-container">
-        <label for="middlename" class="label">Middle Name</label>
-        <input
-          type="text"
-          placeholder="Middle Name"
-          class="input capitalize"
-          v-model="middleName"
-        />
-      </div>
-      <div class="input-container">
-        <label for="lastname" class="label">Surname</label>
-        <input
-          type="text"
-          placeholder="Surname"
-          class="input capitalize"
-          required
-          v-model="lastName"
-        />
-      </div>
-      <div class="input-container">
-        <label for="dob" class="label">Date of Birth</label>
-        <input type="date" id="dob" class="input" required v-model="dob" />
-      </div>
-      <div class="input-container">
-        <label for="gender" class="label">Gender</label>
-        <div class="flex flex-row w-full text-left gap-5">
-          <label>
-            <input
-              type="radio"
-              id="male"
-              value="Male"
-              v-model="gender"
-            />Male</label
-          >
-          <label>
-            <input
-              type="radio"
-              id="female"
-              value="Female"
-              v-model="gender"
-            />Female</label
-          >
-          <label>
-            <input
-              type="radio"
-              id="other"
-              value="Other"
-              v-model="gender"
-            />Other</label
-          >
-        </div>
-      </div>
-      <div class="input-container">
-        <label for="email" class="label">Email</label>
-        <input
-          type="Email"
-          placeholder="Email"
-          class="input"
-          required
-          v-model="email"
-        />
-      </div>
-      <div class="input-container">
-        <label for="phone" class="label">Mobile No</label>
-        <input
-          type="tel"
-          placeholder="Mobile No"
-          class="input"
-          required
-          v-model="mobile"
-        />
-      </div>
+      <AppInput
+        id="firstname"
+        label="First Name"
+        placeholder="First Name"
+        v-model="firstName"
+      />
+      <AppInput
+        id="middlename"
+        label="Middle Name"
+        placeholder="Middle Name"
+        v-model="middleName"
+      />
+      <AppInput
+        id="lastname"
+        label="Surname"
+        placeholder="Surname"
+        v-model="lastName"
+      />
+      <AppInput
+        id="dob"
+        label="Date of Birth"
+        type="date"
+        placeholder="Date of Birth"
+        v-model="dob"
+      />
+      <AppRadio
+        id="gender"
+        label="Gender"
+        v-model="gender"
+        :options="['Male', 'Female', 'Other']"
+      />
+      <AppInput
+        id="email"
+        label="Email"
+        type="Email"
+        placeholder="Email"
+        v-model="email"
+      />
+      <AppInput
+        id="phone"
+        label="Mobile No"
+        type="tel"
+        placeholder="Mobile No"
+        v-model="mobile"
+      />
       <div class="flex items-center self-end">
         <input @click="hidePhone = !hidePhone" type="checkbox" class="mr-2" />
         <label class="text-sm"> Hide </label>
       </div>
-      <div class="input-container">
-        <label for="education" class="label">Education</label>
-        <input
-          type="text"
-          placeholder="Education"
-          class="input capitalize"
-          required
-          v-model="education"
-        />
-      </div>
-      <div class="input-container">
-        <label for="occupation" class="label">occupation</label>
-        <input
-          type="text"
-          placeholder="Occupation"
-          class="input capitalize"
-          required
-          v-model="occupation"
-        />
-      </div>
-      <div class="input-container">
-        <label for="married" class="label">Marital Status</label>
-        <div class="flex flex-row w-full text-left gap-5">
-          <label
-            ><input
-              type="radio"
-              id="unmarried"
-              value="Unmarried"
-              v-model="maritalStatus"
-            />Unmarried</label
-          >
-          <label
-            ><input
-              type="radio"
-              id="married"
-              value="Married"
-              v-model="maritalStatus"
-            />Married</label
-          >
-        </div>
-      </div>
-
-      <button class="btn self-center" type="submit">Add Details</button>
+      <AppInput
+        id="education"
+        label="Education"
+        placeholder="Education"
+        v-model="education"
+      />
+      <AppInput
+        id="occupation"
+        label="Occupation"
+        placeholder="Occupation"
+        v-model="occupation"
+      />
+      <AppRadio
+        id="maritalStatus"
+        label="Marital Status"
+        v-model="maritalStatus"
+        :options="['Unmarried', 'Married']"
+      />
+      <AppButton class="btn self-center" type="submit">Add Details</AppButton>
     </form>
   </div>
 </template>
@@ -195,7 +107,12 @@ import "../assets/main.css";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useRouter } from "vue-router";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import AppButton from "@/components/AppButton.vue";
+import AppInput from "@/components/AppInput.vue";
+import AppRadio from "@/components/AppRadio.vue";
+import AppCard from "@/components/AppCard.vue";
 import { addMemberDetails, getMembers } from "@/firebase/crud";
+import { formatDate } from "@/utils/date";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -280,7 +197,16 @@ onMounted(async () => {
     loading.value = true;
     const result = await getMembers(authStore.user.username);
     if (result.success) {
-      members.value = result.data;
+      members.value = result.data.map((member) => ({
+        Name: `${member.firstName} ${member.middleName} ${member.lastName}`,
+        DOB: formatDate(member.dob),
+        Gender: member.gender,
+        Email: member.email,
+        "Mobile No": member.hidePhone ? "Hidden" : member.mobile,
+        Education: member.education,
+        Occupation: member.occupation,
+        "Marital Status": member.maritalStatus,
+      }));
       isMemberAvailable.value = true;
     } else {
       isMemberAvailable.value = false;
