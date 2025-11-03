@@ -18,8 +18,10 @@ jobs:
           node-version: "18"
           cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (include dev)
+        run: npm ci --include=dev
+        env:
+          NPM_CONFIG_PRODUCTION: "false"
 
       - name: Run build
         run: npm run build
