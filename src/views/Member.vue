@@ -102,6 +102,13 @@
       />
       <AppButton class="btn self-center" type="submit">Add Details</AppButton>
     </form>
+    <AppButton
+      v-if="isMemberAvailable"
+      @click="populateMemberDetails('')"
+      class="btn"
+    >
+      Add Member
+    </AppButton>
     <AppButton v-if="showBackButton" @click="backAction">Back</AppButton>
   </div>
 </template>
