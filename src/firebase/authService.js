@@ -4,7 +4,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-const errorMessage = "";
+import { checkEmailExists } from "@/firebase/crud";
+let errorMessage = "";
 
 const login = async (username, password) => {
   try {
@@ -48,41 +49,49 @@ const login = async (username, password) => {
   }
 };
 
-const signup = async (username, password) => {
-  const email = `${username}@communitybook.com`;
-  try {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    const user = userCredential.user;
-    return { success: true, user: user, message: "Registration successful!" };
-  } catch (err) {
-    if (err.code) {
-      switch (err.code) {
-        case "auth/invalid-email":
-          errorMessage = "Invalid email address.";
-          break;
-        case "auth/email-already-in-use":
-          errorMessage = "This email is already registered.";
-          break;
-        case "auth/weak-password":
-          errorMessage =
-            "The password is too weak. Please choose a stronger password.";
-          break;
-        case "auth/operation-not-allowed":
-          errorMessage =
-            "Email/password sign-in is not enabled. Please contact support.";
-          break;
-        default:
-          errorMessage = "An unexpected error occurred:";
+const signup = async (username, password, emailId) => {
+  const result = await checkEmailExists(emailId);
+  if (!result.success) {
+    const email = `${username}@communitybook.com`;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      return { success: true, user: user, message: "Registration successful!" };
+    } catch (err) {
+      if (err.code) {
+        switch (err.code) {
+          case "auth/invalid-email":
+            errorMessage = "Invalid email address.";
+            break;
+          case "auth/email-already-in-use":
+            errorMessage = "This email is already registered.";
+            break;
+          case "auth/weak-password":
+            errorMessage =
+              "The password is too weak. Please choose a stronger password.";
+            break;
+          case "auth/operation-not-allowed":
+            errorMessage =
+              "Email/password sign-in is not enabled. Please contact support.";
+            break;
+          default:
+            errorMessage = "An unexpected error occurred:";
+        }
+      } else {
+        errorMessage = "An unexpected error occurred:";
       }
-    } else {
-      errorMessage = "An unexpected error occurred:";
+      return { success: false, message: errorMessage };
     }
+  } else {
+    return {
+      success: false,
+      message: "User already registered with this email address.",
+    };
   }
-  return { success: false, message: errorMessage };
 };
 
 const logout = async () => {

@@ -6,33 +6,26 @@
       <p class="error" v-if="error">{{ error }}</p>
     </div>
     <form @submit.prevent="handleLogin" class="form-container items-center">
-      <div class="input-container">
-        <label for="username" class="label">FamilyId</label>
-        <input
-          type="text"
-          placeholder="FamilyId"
-          class="input"
-          required
-          v-model="username"
-        />
-      </div>
-      <div class="input-container">
-        <label for="password" class="label">Password</label>
-        <input
-          type="password"
-          placeholder="Password"
-          class="input"
-          required
-          v-model="password"
-        />
-      </div>
-      <button class="btn" type="submit">Login</button>
+      <AppInput
+        id="username"
+        label="FamilyId"
+        placeholder="Enter your FamilyId"
+        v-model="username"
+      />
+      <AppInput
+        id="password"
+        label="Password"
+        type="password"
+        placeholder="Enter your Password"
+        v-model="password"
+      />
+      <AppButton type="submit">Login</AppButton>
     </form>
 
-    <p>
-      Don't have an account yet?
+    <div class="link-container">
+      <p>Don't have an account yet?</p>
       <a @click="redirectRegister" class="btn"> Register now</a>
-    </p>
+    </div>
   </div>
 </template>
 
@@ -41,6 +34,8 @@ import { ref } from "vue";
 import "../assets/main.css";
 import { useRouter } from "vue-router";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
+import AppButton from "@/components/AppButton.vue";
+import AppInput from "@/components/AppInput.vue";
 import { login } from "@/firebase/authService";
 import { useAuthStore } from "@/stores/useAuthStore";
 
