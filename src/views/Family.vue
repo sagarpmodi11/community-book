@@ -210,7 +210,7 @@ const populateFamilyDetails = async () => {
     loading.value = false;
     showBackButton.value = true;
   }
-};
+};  
 
 onMounted(async () => {
   if (!authStore.user) {
