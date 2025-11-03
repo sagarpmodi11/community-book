@@ -17,7 +17,11 @@
         :key="member.memberId"
         class="flex justify-center"
       >
-        <AppCard :data="member" />
+        <AppCard
+          :data="member"
+          :itemId="member.MemberId"
+          @edit="populateMemberDetails"
+        />
       </div>
     </div>
 
@@ -98,6 +102,7 @@
       />
       <AppButton class="btn self-center" type="submit">Add Details</AppButton>
     </form>
+    <AppButton v-if="showBackButton" @click="backAction">Back</AppButton>
   </div>
 </template>
 
@@ -112,9 +117,12 @@ import AppInput from "@/components/AppInput.vue";
 import AppRadio from "@/components/AppRadio.vue";
 import AppCard from "@/components/AppCard.vue";
 import { addMemberDetails, getMembers } from "@/firebase/crud";
-import { formatDate } from "@/utils/date";
+import { formatDate, formatDatewithSlashes } from "@/utils/date";
+import { formatName } from "@/utils/name";
+import { useMembersStore } from "@/stores/memberDetailsStore";
 
 const authStore = useAuthStore();
+const memberStore = useMembersStore();
 const router = useRouter();
 const error = ref("");
 const loading = ref(false);
@@ -123,7 +131,7 @@ const isMemberAvailable = ref(false);
 const firstName = ref("");
 const middleName = ref("");
 const lastName = ref("");
-const dob = ref("");
+const dob = ref("11/05/1985");
 const email = ref("");
 const mobile = ref("");
 const education = ref("");
@@ -132,6 +140,7 @@ const maritalStatus = ref("Unmarried");
 const gender = ref("Male");
 const hidePhone = ref(false);
 const members = ref([]);
+const showBackButton = ref(false);
 
 const phoneValidation = () => {
   if (mobile.value) {
@@ -172,6 +181,7 @@ const addMemberDetail = async () => {
       status.value = result.message;
       loading.value = false;
       isMemberAvailable.value = true;
+      showBackButton.value = false;
     } else {
       error.value = result.message;
       loading.value = false;
@@ -190,6 +200,52 @@ const addMemberDetail = async () => {
   }
 };
 
+const populateMemberDetails = (memberId) => {
+  if (!authStore.user) {
+    redirectLogin;
+  } else {
+    loading.value = true;
+    isMemberAvailable.value = false;
+    const member = memberStore.findMemberById(memberId);
+    if (member) {
+      const name = formatName(member.Name);
+      firstName.value = name.firstName;
+      middleName.value = name.middleName;
+      lastName.value = name.lastName;
+      gender.value = member.Gender;
+      dob.value = formatDatewithSlashes(member.DOB);
+      email.value = member.Email;
+      mobile.value = member["Mobile No"];
+      education.value = member.Education;
+      occupation.value = member.Occupation;
+      maritalStatus.value = member["Marital Status"];
+    }
+    loading.value = false;
+    showBackButton.value = true;
+  }
+};
+
+const backAction = () => {
+  if (memberStore.members) {
+    members.value = memberStore.members.map((member) => ({
+      MemberId: member.MemberId,
+      Name: member.Name,
+      DOB: member.DOB,
+      Gender: member.Gender,
+      Email: member.Email,
+      "Mobile No": member.hidePhone ? "Hidden" : member["Mobile No"],
+      Education: member.Education,
+      Occupation: member.Occupation,
+      "Marital Status": member["Marital Status"],
+    }));
+    isMemberAvailable.value = true;
+    showBackButton.value = false;
+  } else {
+    isMemberAvailable.value = false;
+    showBackButton.value = false;
+  }
+};
+
 onMounted(async () => {
   if (!authStore.user) {
     router.push("/login");
@@ -198,6 +254,7 @@ onMounted(async () => {
     const result = await getMembers(authStore.user.username);
     if (result.success) {
       members.value = result.data.map((member) => ({
+        MemberId: member.memberId,
         Name: `${member.firstName} ${member.middleName} ${member.lastName}`,
         DOB: formatDate(member.dob),
         Gender: member.gender,
@@ -207,9 +264,12 @@ onMounted(async () => {
         Occupation: member.occupation,
         "Marital Status": member.maritalStatus,
       }));
+      memberStore.setMembers(members.value);
       isMemberAvailable.value = true;
+      showBackButton.value = false;
     } else {
       isMemberAvailable.value = false;
+      showBackButton.value = true;
     }
     loading.value = false;
   }

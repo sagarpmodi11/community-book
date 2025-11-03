@@ -5,7 +5,7 @@
       src="../assets/icons/edit-text.png"
       alt="Logo"
       class="h-7 w-7 ml-1 cursor-pointer"
-      @click="$emit('edit')"
+      @click="handleEdit(itemId)"
       title="Edit Details"
     />
     <div class="card-container" v-for="(value, key) in data" :key="key">
@@ -17,10 +17,14 @@
 
 <script setup>
 import "../assets/main.css";
-defineProps({
+const props = defineProps({
   title: { type: String, default: "" },
   data: { type: Object, required: true },
   showEdit: { type: Boolean, default: true },
+  itemId: { type: Number, default: null },
 });
-defineEmits(["edit"]);
+const emit = defineEmits(["edit"]);
+const handleEdit = (id) => {
+  emit("edit", id);
+};
 </script>
