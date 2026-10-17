@@ -17,7 +17,7 @@ hosting/.cache
 /emulator-ui/
 
 #Firebase Config
-/src/firebase/firebase.js
+/src/firebase/firebaseConfig.js
 
 # Logs
 *.log
